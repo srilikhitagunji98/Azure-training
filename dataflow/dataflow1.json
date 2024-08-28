@@ -45,7 +45,7 @@
 				"     validateSchema: false,",
 				"     isolationLevel: 'READ_UNCOMMITTED',",
 				"     format: 'table') ~> Orders",
-				"Employee, Orders join(Employee@employee_id == order_id,",
+				"Employee, Orders join(Employee@employee_id == Orders@employee_id,",
 				"     joinType:'inner',",
 				"     matchType:'exact',",
 				"     ignoreSpaces: false,",
