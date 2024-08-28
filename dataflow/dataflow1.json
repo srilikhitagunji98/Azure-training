@@ -17,6 +17,20 @@
 						"type": "DatasetReference"
 					},
 					"name": "Orders"
+				},
+				{
+					"dataset": {
+						"referenceName": "customertable",
+						"type": "DatasetReference"
+					},
+					"name": "customers"
+				},
+				{
+					"dataset": {
+						"referenceName": "orderdetailstable",
+						"type": "DatasetReference"
+					},
+					"name": "orderdetails"
 				}
 			],
 			"sinks": [
@@ -34,6 +48,18 @@
 				},
 				{
 					"name": "select1"
+				},
+				{
+					"name": "join2"
+				},
+				{
+					"name": "join3"
+				},
+				{
+					"name": "select2"
+				},
+				{
+					"name": "select3"
 				}
 			],
 			"scriptLines": [
@@ -56,6 +82,33 @@
 				"     validateSchema: false,",
 				"     isolationLevel: 'READ_UNCOMMITTED',",
 				"     format: 'table') ~> Orders",
+				"source(output(",
+				"          customer_id as integer,",
+				"          name as string,",
+				"          dob as date,",
+				"          email as string,",
+				"          gender as string,",
+				"          country as string,",
+				"          region as string,",
+				"          city as string,",
+				"          asset as integer,",
+				"          marital_status as string",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     isolationLevel: 'READ_UNCOMMITTED',",
+				"     format: 'table') ~> customers",
+				"source(output(",
+				"          order_detail_id as integer,",
+				"          order_id as integer,",
+				"          product_id as integer,",
+				"          customer_id as integer,",
+				"          quantity_sold as integer",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     isolationLevel: 'READ_UNCOMMITTED',",
+				"     format: 'table') ~> orderdetails",
 				"Employee, Orders join(Employee@employee_id == Orders@employee_id,",
 				"     joinType:'inner',",
 				"     matchType:'exact',",
@@ -67,6 +120,47 @@
 				"     ),",
 				"     skipDuplicateMapInputs: true,",
 				"     skipDuplicateMapOutputs: true) ~> select1",
+				"customers, orderdetails join(ERROR_FUNCTION('') == ERROR_FUNCTION(''),",
+				"     joinType:'inner',",
+				"     matchType:'exact',",
+				"     ignoreSpaces: false,",
+				"     broadcast: 'auto')~> join2",
+				"Orders, orderdetails join(ERROR_FUNCTION('') == ERROR_FUNCTION(''),",
+				"     joinType:'inner',",
+				"     matchType:'exact',",
+				"     ignoreSpaces: false,",
+				"     broadcast: 'auto')~> join3",
+				"join3 select(mapColumn(",
+				"          order_id = Orders@order_id,",
+				"          order_date,",
+				"          employee_id,",
+				"          order_detail_id,",
+				"          order_id = orderdetails@order_id,",
+				"          product_id,",
+				"          customer_id,",
+				"          quantity_sold",
+				"     ),",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true) ~> select2",
+				"join2 select(mapColumn(",
+				"          customer_id = customers@customer_id,",
+				"          name,",
+				"          dob,",
+				"          email,",
+				"          gender,",
+				"          country,",
+				"          region,",
+				"          city,",
+				"          asset,",
+				"          marital_status,",
+				"          order_detail_id,",
+				"          order_id,",
+				"          product_id,",
+				"          customer_id = orderdetails@customer_id,",
+				"          quantity_sold",
+				"     ),",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true) ~> select3",
 				"select1 sink(allowSchemaDrift: true,",
 				"     validateSchema: false,",
 				"     umask: 0022,",
